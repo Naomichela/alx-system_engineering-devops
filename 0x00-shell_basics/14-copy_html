@@ -1,3 +1,2 @@
-y_html
 #!/bin/bash
-cp -n *.html ../
+cp -un  *.html ../ 
