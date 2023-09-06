@@ -1,21 +1,2 @@
 #!/bin/bash
-
-# Check if the environment variables are set
-if [ -z "$WATER" ] || [ -z "$STIR" ]; then
-  echo "Error: One or both of the environment variables WATER and STIR are not set."
-  exit 1
-fi
-
-# Convert the base-water and base-stir values to base-10
-water_base10=$(echo "ibase=water; $WATER" | bc)
-stir_base10=$(echo "ibase=stir; $STIR" | bc)
-
-# Calculate the sum in base-10
-sum_base10=$((water_base10 + stir_base10))
-
-# Convert the result to base-bestchol
-result_bestchol=$(echo "obase=bestchol; $sum_base10" | bc)
-
-# Print the result
-echo "Result in base bestchol: $result_bestchol"
-
+echo $(printf %o $(($((5#$(echo $WATER | tr 'water' '01234'))) + $((5#$echo $STIR | tr 'stir' '01234'))))) | tr '01234567' 'bestchol'
