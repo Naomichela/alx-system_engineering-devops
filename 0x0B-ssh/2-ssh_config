@@ -1,0 +1,6 @@
+   Host Maya
+       HostName 100.26.234.26
+       User ubuntu
+       Port 22
+       IdentityFile ~/.ssh/school
+       PasswordAuthentication no
