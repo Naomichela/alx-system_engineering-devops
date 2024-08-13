@@ -1,42 +1,37 @@
 #!/usr/bin/python3
 """
-Module for top_ten function
+Script to print hot posts on a given Reddit subreddit.
 """
+
 import requests
 
 
 def top_ten(subreddit):
-    """
-    Retrieves the titles of the top 10 hot posts in a given subreddit.
+    """Print the titles of the 10 hottest posts on a given subreddit."""
+    # Construct the URL for the subreddit's hot posts in JSON format
+    url = "https://www.reddit.com/r/{}/hot/.json".format(subreddit)
 
-    :param subreddit: The name of the subreddit.
-    :return: None
-    """
-    # Reddit API endpoint for getting hot posts in a subreddit
-    url = f'https://www.reddit.com/r/{subreddit}/hot.json?limit=10'
+    # Define headers for the HTTP request, including User-Agent
+    headers = {
+        "User-Agent": "linux:0x16.api.advanced:v1.0.0 (by /u/bdov_)"
+    }
 
-    # Set a custom User-Agent to avoid Too Many Requests error
-    headers = {'User-Agent': 'Custom User Agent'}
+    # Define parameters for the request, limiting the number of posts to 10
+    params = {
+        "limit": 10
+    }
 
-    # Make a GET request to the Reddit API
-    response = requests.get(url, headers=headers)
+    # Send a GET request to the subreddit's hot posts page
+    response = requests.get(url, headers=headers, params=params,
+                            allow_redirects=False)
 
-    # Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        # Parse the JSON response
-        data = response.json()
+    # Check if the response status code indicates a not-found error (404)
+    if response.status_code == 404:
+        print("None")
+        return
 
-        # Check if the 'children' key is present
-        if 'children' in data['data']:
-            # Iterate over the first 10 posts and print their titles
-            for post in data['data']['children']:
-                print(post['data']['title'])
-        else:
-            print("No posts found.")
-    elif response.status_code == 404:
-        # Subreddit not found, print None
-        print(None)
-    else:
-        # Other error, print the status code and print None
-        print(f"Error: {response.status_code}")
-        print(None)
+    # Parse the JSON response and extract the 'data' section
+    results = response.json().get("data")
+
+    # Print the titles of the top 10 hottest posts
+    [print(c.get("data").get("title")) for c in results.get("children")]

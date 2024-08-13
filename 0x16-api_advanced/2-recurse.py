@@ -1,65 +1,61 @@
 #!/usr/bin/python3
 """
-Retrieves the titles of the top 10 hot posts in a given subreddit.
+Script to query a list of all hot posts on a given Reddit subreddit.
 """
+
 import requests
 
 
-def recurse(subreddit, hot_list=None, after=None, success_flag=False):
+def recurse(subreddit, hot_list=[], after="", count=0):
     """
-    Retrieves the titles of the top 10 hot posts in a given subreddit.
+    Recursively retrieves a list of titles of all hot posts
+    on a given subreddit.
 
-    :param subreddit: The name of the subreddit.
-    :param hot_list: The list of hot posts.
-    :param after: The parameter for pagination.
-    :param success_flag: A flag to indicate if the request was successful.
-    :return: None
+    Args:
+        subreddit (str): The name of the subreddit.
+        hot_list (list, optional): List to store the post titles.
+                                    Default is an empty list.
+        after (str, optional): Token used for pagination.
+                                Default is an empty string.
+        count (int, optional): Current count of retrieved posts. Default is 0.
+
+    Returns:
+        list: A list of post titles from the hot section of the subreddit.
     """
-    if hot_list is None:
-        hot_list = []
+    # Construct the URL for the subreddit's hot posts in JSON format
+    url = "https://www.reddit.com/r/{}/hot/.json".format(subreddit)
 
-    # Reddit API endpoint for getting hot posts in a subreddit
-    url = f'https://www.reddit.com/r/{subreddit}/hot.json?limit=100&after={after}'
+    # Define headers for the HTTP request, including User-Agent
+    headers = {
+        "User-Agent": "linux:0x16.api.advanced:v1.0.0 (by /u/bdov_)"
+    }
 
-    # Set a custom User-Agent to avoid Too Many Requests error
-    headers = {'User-Agent': 'Custom User Agent'}
+    # Define parameters for the request, including pagination and limit
+    params = {
+        "after": after,
+        "count": count,
+        "limit": 100
+    }
 
-    # Make a GET request to the Reddit API
-    response = requests.get(url, headers=headers)
+    # Send a GET request to the subreddit's hot posts page
+    response = requests.get(url, headers=headers, params=params,
+                            allow_redirects=False)
 
-    # Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        # Parse the JSON response
-        data = response.json()
-
-        # Check if the 'children' key is present
-        if 'children' in data['data']:
-            # Iterate over the posts and add their titles to hot_list
-            for post in data['data']['children']:
-                hot_list.append(post['data']['title'])
-
-            # Check if there are more pages (pagination)
-            after = data['data']['after']
-            if after is not None:
-                # Recursively call the function with the new 'after' parameter
-                recurse(subreddit, hot_list, after, success_flag)
-            else:
-                # No more pages, set the success flag to True
-                success_flag = True
-        else:
-            # No posts found, return None
-            return None
-    elif response.status_code == 404:
-        # Subreddit not found, return None
+    # Check if the response status code indicates a not-found error (404)
+    if response.status_code == 404:
         return None
-    else:
-        # Other error, print the status code and return None
-        print(f"Error: {response.status_code}")
-        return None
+    # Parse the JSON response and extract relevant data
+    results = response.json().get("data")
+    after = results.get("after")
+    count += results.get("dist")
 
-    # If success flag is True, return "OK"
-    if success_flag:
-        return "OK"
+    # Append post titles to the hot_list
+    for c in results.get("children"):
+        hot_list.append(c.get("data").get("title"))
 
-    # Otherwise, return the accumulated hot_list
-    return hot_lit
+    # If there are more posts to retrieve, recursively call the function
+    if after is not None:
+        return recurse(subreddit, hot_list, after, count)
+
+    # Return the final list of hot post titles
+    return hot_list
